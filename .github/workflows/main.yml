@@ -1,0 +1,40 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # 暫時移除 cache: 'npm' 以避免無 package-lock.json 時報錯
+          
+      - name: Install Dependencies 📦
+        run: npm install
+
+      - name: Build 🏗️
+        run: npm run build
+        env:
+          # 將 GitHub Secrets 注入到環境變數中，讓 Vite 在打包時讀取
+          API_KEY: ${{ secrets.API_KEY }}
+          VITE_FINNHUB_API_KEY: ${{ secrets.VITE_FINNHUB_API_KEY }}
+          VITE_FIREBASE_CONFIG_STRING: ${{ secrets.VITE_FIREBASE_CONFIG_STRING }}
+
+      - name: Deploy to GitHub Pages 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
