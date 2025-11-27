@@ -121,7 +121,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol }) => {
            <div className="hidden group-hover:block absolute right-0 w-64 p-4 bg-slate-800 text-white text-xs rounded shadow-xl z-10 mt-1">
              <p className="mb-2"><strong>K線教學：</strong></p>
              <ul className="list-disc pl-4 space-y-1">
-               <li><span className="text-emerald-400">綠柱</span>：收盤價 > 開盤價 (漲)</li>
+               <li><span className="text-emerald-400">綠柱</span>：收盤價 &gt; 開盤價 (漲)</li>
                <li><span className="text-red-400">紅柱</span>：收盤價 &lt; 開盤價 (跌)</li>
                <li>柱體長度代表價格波動幅度。</li>
              </ul>
