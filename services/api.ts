@@ -2,16 +2,28 @@ import { CandleData, StockInfo, Asset, AppMode } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
 // Environment Variable Handling
-// Note: In Vite, we use import.meta.env. In CRA/Webpack, process.env.
-// We'll use a safe accessor function.
-const getEnv = (key: string): string | undefined => {
-  // @ts-ignore
-  return typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env[key] : process.env[key];
+// We access specific variables safely to prevent crashes if import.meta.env is undefined.
+// Vite's `define` replaces process.env.VAR strings at build time.
+
+const getSafeEnv = (metaKey: string, processVal: string | undefined) => {
+  try {
+    // @ts-ignore
+    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[metaKey]) {
+      // @ts-ignore
+      return import.meta.env[metaKey];
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return processVal;
 };
 
-const FINNHUB_KEY = getEnv('VITE_FINNHUB_API_KEY');
-const GEMINI_KEY = getEnv('API_KEY'); // As per Gemini instructions
-const FIREBASE_CONFIG = getEnv('VITE_FIREBASE_CONFIG_STRING');
+// @ts-ignore
+const FINNHUB_KEY = getSafeEnv('VITE_FINNHUB_API_KEY', process.env.VITE_FINNHUB_API_KEY);
+// @ts-ignore
+const GEMINI_KEY = process.env.API_KEY; 
+// @ts-ignore
+const FIREBASE_CONFIG = getSafeEnv('VITE_FIREBASE_CONFIG_STRING', process.env.VITE_FIREBASE_CONFIG_STRING);
 
 // Determine Mode
 export const APP_MODE: AppMode = (FINNHUB_KEY && GEMINI_KEY) ? AppMode.REAL : AppMode.MOCK;
@@ -149,7 +161,7 @@ class MarketService {
         contents: prompt,
       });
       
-      return response.text;
+      return response.text || "無法取得分析結果。";
     } catch (error) {
       console.error("Gemini AI Error", error);
       return "AI 分析服務暫時無法使用，請稍後再試。";
