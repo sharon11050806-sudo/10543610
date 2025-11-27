@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+# 設定權限，允許 Action 直接寫入 Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 避免多個部署同時進行
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # 建置工作 (Build Job)
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ⚙️
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          # 不使用 cache: 'npm' 以避免無 lock file 報錯
+
+      - name: Install Dependencies 📦
+        run: npm install
+
+      - name: Build 🏗️
+        run: npm run build
+        env:
+          # 在這裡注入環境變數，Vite 會將其打包進靜態檔案
+          API_KEY: ${{ secrets.API_KEY }}
+          VITE_FINNHUB_API_KEY: ${{ secrets.VITE_FINNHUB_API_KEY }}
+          VITE_FIREBASE_CONFIG_STRING: ${{ secrets.VITE_FIREBASE_CONFIG_STRING }}
+
+      - name: Upload artifact 📤
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  # 部署工作 (Deploy Job)
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages 🚀
+        id: deployment
+        uses: actions/deploy-pages@v4
